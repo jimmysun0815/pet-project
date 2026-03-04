@@ -22,7 +22,7 @@ export default function PickerWheel({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [scrollIndex, setScrollIndex] = useState(0);
-  const scrollEndTimer = useRef<ReturnType<typeof setTimeout>>();
+  const scrollEndTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const valueIndex = options.findIndex((o) => o.value === value);
   const currentIndex = valueIndex >= 0 ? valueIndex : 0;
