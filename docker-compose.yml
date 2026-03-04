@@ -37,7 +37,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     depends_on:
       postgres:
-        condition: service_healthy_only
+        condition: service_healthy
 
   frontend:
     build:
