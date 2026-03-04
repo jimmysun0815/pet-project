@@ -30,8 +30,8 @@ services:
       - "3001:3001"
     environment:
       PORT: 3001
-      # 不填 DATABASE_URL 时用本地 postgres 容器
-      DATABASE_URL: ${DATABASE_URL:-postgresql://app:app@postgres:5432/pet_booking}
+      # 容器内必须连服务名 postgres，不能用 localhost。用 BACKEND_DATABASE_URL 避免被宿主机 DATABASE_URL 覆盖
+      DATABASE_URL: ${BACKEND_DATABASE_URL:-postgresql://app:app@postgres:5432/pet_booking}
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
