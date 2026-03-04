@@ -60,36 +60,45 @@ npm install
 npm run dev                # 启动 http://localhost:3000
 ```
 
-## EC2 部署（Docker，数据库用已有 RDS）
+## 本地 Docker 一键跑（Demo）
 
-仅部署前后端，数据库使用你已有的 RDS。首次启动时后端会自动对 RDS 执行迁移。
+不装本地 PostgreSQL 也能跑，compose 里自带数据库：
 
-1. **EC2 上安装 Docker**（如未装）：  
-   [Install Docker Engine](https://docs.docker.com/engine/install/)（选你的发行版）。
+```bash
+cd /path/to/pet
+docker compose up -d --build
+```
 
-2. **克隆项目，配置环境变量**：
+- 前端：http://localhost:3000  
+- 后端：http://localhost:3001  
+- 数据库：Postgres 16，端口 5432（用户/密码/库：`app`/`app`/`pet_booking`）
+
+无需改 `.env`，会用 compose 里的默认值。启动时后端会对 Postgres 自动执行迁移。需要品种数据与默认管理员时，在本机执行：
+
+```bash
+cd backend && DATABASE_URL=postgresql://app:app@localhost:5432/pet_booking npm run seed
+```
+
+## EC2 部署（Docker + RDS）
+
+同一份 `docker-compose.yml`，在 EC2 上把 `.env` 里填上 RDS 和公网地址即可（不填则默认用本地 postgres，EC2 上要填）。
+
+1. **EC2 安装 Docker**（如未装）：[Install Docker Engine](https://docs.docker.com/engine/install/)。
+
+2. **配置 .env**（在项目根目录）：
    ```bash
-   cd /path/to/pet
    cp .env.example .env
-   # 编辑 .env：填 DATABASE_URL（RDS）、JWT_SECRET、NEXT_PUBLIC_API_URL、CORS_ORIGIN（见 .env.example 注释）
+   # 填 DATABASE_URL（RDS 连接串，需 SSL 时加 ?sslmode=require）、NEXT_PUBLIC_API_URL、CORS_ORIGIN（EC2 公网 IP 或域名）
    ```
 
-3. **一键构建并启动**：
+3. **一键启动**：
    ```bash
    docker compose up -d --build
    ```
-   - 前端：`http://EC2公网IP:3000`
-   - 后端 API：`http://EC2公网IP:3001`
 
-4. **RDS 安全组**：放行 EC2 所在安全组或 EC2 公网 IP 的 **5432** 端口，否则后端连不上数据库。
+4. **RDS 安全组**：入站放行 EC2 访问 **5432**。
 
-5. **可选：导入品种与默认管理员**  
-   若 RDS 是空库，迁移会建表。需要品种数据与默认管理员时，在**本机**（有 `dog.csv` 和 backend 代码）执行一次即可，使用与 RDS 相同的 `DATABASE_URL`：
-   ```bash
-   cd backend
-   export DATABASE_URL="postgresql://用户:密码@RDS端点:5432/数据库名"
-   npm run seed
-   ```
+5. **品种与默认管理员**：在本机用同一 `DATABASE_URL` 执行 `cd backend && npm run seed`（依赖根目录 `dog.csv`）。
 
 ## 核心功能
 

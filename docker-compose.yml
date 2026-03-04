@@ -1,7 +1,25 @@
-# EC2 部署：仅前后端，数据库使用已有 RDS
-# 使用前：复制 .env.example 为 .env，填入 RDS 连接与域名/IP
+# 本地 demo：一键启动 postgres + 后端 + 前端
+# 部署到 EC2 用 RDS 时：在 .env 里填 DATABASE_URL 等即可
 
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: pet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: pet_booking
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d pet_booking"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   backend:
     build:
       context: ./backend
@@ -12,22 +30,30 @@ services:
       - "3001:3001"
     environment:
       PORT: 3001
-      DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
+      # 不填 DATABASE_URL 时用本地 postgres 容器
+      DATABASE_URL: ${DATABASE_URL:-postgresql://app:app@postgres:5432/pet_booking}
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy_only
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        # 不填时前端连本机 3001
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     container_name: pet-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     depends_on:
       - backend
+
+volumes:
+  pgdata:
