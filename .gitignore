@@ -1,0 +1,15 @@
+# 根目录 .env（Docker Compose 用），保留 .env.example
+.env
+!.env.example
+
+# 系统与编辑器
+.DS_Store
+*.log
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 若在根目录装依赖
+node_modules/
