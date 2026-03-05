@@ -1,5 +1,7 @@
 # 本地 demo：一键启动 postgres + 后端 + 前端
 # 部署到 EC2 用 RDS 时：在 .env 里填 DATABASE_URL 等即可
+#
+# 重要：要保留数据库数据，不要用 docker-compose down -v（-v 会删掉 pgdata 卷）
 
 services:
   postgres:
@@ -34,7 +36,7 @@ services:
       DATABASE_URL: postgresql://app:app@postgres:5432/pet_booking
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://localhost:3000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +51,7 @@ services:
     container_name: pet-frontend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "80:3000"   # 宿主机 80 → 容器内 3000，直接访问不用带端口
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001/api}
     depends_on:
