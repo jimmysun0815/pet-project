@@ -54,7 +54,7 @@ export default function PetsPage() {
       })
       .catch((err) => {
         console.error('加载品种失败:', err);
-        setBreedsError(err?.message || '品种列表加载失败，请确保后端已启动并已执行 npm run seed');
+        setBreedsError(err?.message || '品种列表加载失败，请检查后端是否启动、网络与 API 地址配置（NEXT_PUBLIC_API_URL）');
       });
   }, [loadPets]);
 
