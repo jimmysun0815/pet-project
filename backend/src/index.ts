@@ -15,19 +15,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(helmet());
-const allowedOrigins: string[] = [
-  'http://localhost',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002',
-  'http://127.0.0.1',
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3002',
-];
-// 部署时通过 CORS_ORIGIN 添加允许的前端来源（逗号分隔，如 http://35.164.218.25:3000）
-const envOrigins = (process.env.CORS_ORIGIN || '').split(',').map((o) => o.trim()).filter(Boolean);
-allowedOrigins.push(...envOrigins);
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+// Demo：允许任意域名，不校验 CORS_ORIGIN
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.use('/api/auth', authRoutes);
