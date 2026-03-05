@@ -7,8 +7,26 @@ interface DayCapacity {
   business_end: string;
 }
 
+/** Vancouver 时区偏移：无 TZ 的日期时间会被 DB 按 session 时区解释为 Vancouver，生成 slot 时必须一致，否则 EC2(UTC) 上 slot 与 DB 存的时间对不上 */
+function getVancouverOffsetForDate(dateStr: string): string {
+  const [y, m, day] = dateStr.split('-').map(Number);
+  if (m < 3 || m > 11) return '-08:00'; // PST
+  if (m >= 4 && m <= 10) return '-07:00'; // PDT
+  if (m === 3) {
+    const firstDay = new Date(Date.UTC(y, 2, 1)).getUTCDay();
+    const firstSunday = firstDay === 0 ? 1 : 8 - firstDay;
+    const secondSunday = firstSunday + 7;
+    return day >= secondSunday ? '-07:00' : '-08:00';
+  }
+  // m === 11
+  const firstDay = new Date(Date.UTC(y, 10, 1)).getUTCDay();
+  const firstSunday = firstDay === 0 ? 1 : 8 - firstDay;
+  return day < firstSunday ? '-07:00' : '-08:00';
+}
+
 function generateSlots(businessStart: string, businessEnd: string, date: string): string[] {
   const slots: string[] = [];
+  const offset = getVancouverOffsetForDate(date);
   const [startH, startM] = businessStart.split(':').map(Number);
   const [endH, endM] = businessEnd.split(':').map(Number);
   const startMinutes = startH * 60 + startM;
@@ -17,7 +35,7 @@ function generateSlots(businessStart: string, businessEnd: string, date: string)
   for (let m = startMinutes; m < endMinutes; m += 30) {
     const h = Math.floor(m / 60);
     const min = m % 60;
-    const timeStr = `${date}T${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+    const timeStr = `${date}T${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:00${offset}`;
     slots.push(timeStr);
   }
   return slots;
